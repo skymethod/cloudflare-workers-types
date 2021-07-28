@@ -521,8 +521,13 @@ export interface DurableObjectStorageMethods {
      * 
      * The value can be any type supported by the structured clone algorithm, which is true of most types. 
      * 
-     * Keys are limited to a max size of 2048 bytes and values are limited to 32 KiB (32768 bytes). */
-    put(key: string, value: DurableObjectStorageValue): Promise<void>;
+     * Keys are limited to a max size of 2048 bytes and values are limited to 32 KiB (32768 bytes). 
+     * 
+     * With the new storage memory cache in place, if you don't await a `put()`, it will now implicitly await it before returning a response, 
+     * to avoid premature confirmation of writes. But if you actually don't want to wait, and you are OK with the possibility of rare data loss 
+     * (e.g. if the power went out before the write completed), then you should use `{ allowUnconfirmed: true }`
+     * */
+    put(key: string, value: DurableObjectStorageValue, opts?: { allowUnconfirmed?: boolean }): Promise<void>;
 
     /** Takes an Object and stores each of its keys and values to storage. 
      * 
@@ -564,8 +569,10 @@ export interface DurableObjectStorage extends DurableObjectStorageMethods {
      * 
      * Failed transactions are retried automatically. 
      * 
-     * Non-storage operations that affect external state, like calling fetch, may execute more than once if the transaction is retried. */
-    transaction(closure: (txn: DurableObjectStorageTransaction) => void): Promise<void>;
+     * Non-storage operations that affect external state, like calling fetch, may execute more than once if the transaction is retried.
+     * 
+     * The closure can return a value, which will be propagated as the return value of the call. */
+    transaction<T>(closure: (txn: DurableObjectStorageTransaction) => T): Promise<T>;
 
     /** Deletes all keys and associated values, effectively deallocating all storage used by the worker. 
      * 
@@ -622,6 +629,11 @@ export interface DurableObjectState {
      * 
      * See [waitUntil()](https://developer.mozilla.org/en-US/docs/Web/API/ExtendableEvent/waitUntil) for a detailed reference. */
     waitUntil(promise: Promise<unknown>): void;
+
+    /** Useful for delaying delivery of requests and other events while performing some critical state-affecting task. 
+     * 
+     * For example, this can be used to perform start-up initialization in an object’s constructor. */
+    blockConcurrencyWhile<T>(fn: () => Promise<T>): Promise<T>;
 }
 
 //#endregion
