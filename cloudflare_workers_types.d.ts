@@ -507,7 +507,7 @@ export interface DurableObjectStorageMethods {
     /** Retrieves the value associated with the given key. 
      * 
      * The type of the returned value will be whatever was previously written for the key, or undefined if the key does not exist. */
-    get(key: string): Promise<DurableObjectStorageValue | undefined>;
+    get(key: string, opts?: DurableObjectStorageReadOptions): Promise<DurableObjectStorageValue | undefined>;
 
     /** Retrieves the values associated with each of the provided keys. 
      * 
@@ -515,7 +515,7 @@ export interface DurableObjectStorageMethods {
      * Any keys that do not exist will be omitted from the result Map. 
      * 
      * Supports up to 128 keys at a time. */
-    get(keys: readonly string[]): Promise<Map<string, DurableObjectStorageValue>>;
+    get(keys: readonly string[], opts?: DurableObjectStorageReadOptions): Promise<Map<string, DurableObjectStorageValue>>;
 
     /** Stores the value and associates it with the given key. 
      * 
@@ -523,11 +523,8 @@ export interface DurableObjectStorageMethods {
      * 
      * Keys are limited to a max size of 2048 bytes and values are limited to 32 KiB (32768 bytes). 
      * 
-     * With the new storage memory cache in place, if you don't await a `put()`, it will now implicitly await it before returning a response, 
-     * to avoid premature confirmation of writes. But if you actually don't want to wait, and you are OK with the possibility of rare data loss 
-     * (e.g. if the power went out before the write completed), then you should use `{ allowUnconfirmed: true }`
      * */
-    put(key: string, value: DurableObjectStorageValue, opts?: { allowUnconfirmed?: boolean }): Promise<void>;
+    put(key: string, value: DurableObjectStorageValue, opts?: DurableObjectStorageWriteOptions): Promise<void>;
 
     /** Takes an Object and stores each of its keys and values to storage. 
      * 
@@ -536,17 +533,17 @@ export interface DurableObjectStorageMethods {
      * Supports up to 128 key-value pairs at a time. 
      * 
      * Each key is limited to a max size of 2048 bytes and each value is limited to 32 KiB (32768 bytes). */
-    put(entries: Record<string, unknown>): Promise<void>;
+    put(entries: Record<string, unknown>, opts?: DurableObjectStorageWriteOptions): Promise<void>;
 
     /** Deletes the key and associated value.
      * 
      * Returns true if the key existed or false if it didn't. */
-    delete(key: string): Promise<boolean>;
+    delete(key: string, opts?: DurableObjectStorageWriteOptions): Promise<boolean>;
 
     /** Deletes the provided keys and their associated values. 
      * 
      * Returns a count of the number of key-value pairs deleted. */
-    delete(keys: readonly string[]): Promise<number>;
+    delete(keys: readonly string[], opts?: DurableObjectStorageWriteOptions): Promise<number>;
 
     /** Returns all keys and values associated with the current Durable Object in ascending lexicographic sorted order. 
      * 
@@ -559,7 +556,7 @@ export interface DurableObjectStorageMethods {
     list(): Promise<Map<string, DurableObjectStorageValue>>;
 
     /** Returns keys associated with the current Durable Object according to the parameters in the provided DurableObjectStorageListOptions object. */
-    list(options: DurableObjectStorageListOptions): Promise<Map<string, DurableObjectStorageValue>>;
+    list(options: DurableObjectStorageListOptions & DurableObjectStorageReadOptions): Promise<Map<string, DurableObjectStorageValue>>;
 }
 
 export interface DurableObjectStorage extends DurableObjectStorageMethods {
@@ -594,6 +591,26 @@ export interface DurableObjectStorage extends DurableObjectStorageMethods {
  * rollback() takes no parameters and returns nothing to the caller. */
 export interface DurableObjectStorageTransaction extends DurableObjectStorageMethods {
     rollback(): void;
+}
+
+export interface DurableObjectStorageReadOptions {
+    /** Bypass the built-in concurrency gates */
+    readonly allowConcurrency?: boolean;
+
+    /** Bypass the built-in memory cache */
+    readonly noCache?: boolean;
+}
+
+export interface DurableObjectStorageWriteOptions {
+    /** Bypass the built-in waiting for write to complete before returning a response
+     * 
+    * With the new storage memory cache in place, if you don't await a `put()`, it will now implicitly await it before returning a response, 
+    * to avoid premature confirmation of writes. But if you actually don't want to wait, and you are OK with the possibility of rare data loss 
+    * (e.g. if the power went out before the write completed), then you should use `{ allowUnconfirmed: true }` */
+    readonly allowUnconfirmed?: boolean;
+
+    /** Bypass the built-in memory cache */
+    readonly noCache?: boolean;
 }
 
 export interface DurableObjectStorageListOptions {
