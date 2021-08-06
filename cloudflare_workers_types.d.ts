@@ -487,7 +487,6 @@ export interface DurableObjectNamespace {
      * However, instead of sending an HTTP request to the internet, the request is always sent to the Durable Object to which the stub points.
      * 
      * Any uncaught exceptions thrown by the Durable Object's fetch() handler are propagated to the caller's fetch() promise. */
-    fetch(url: string): Promise<Response>;
     fetch(url: RequestInfo, init?: RequestInit): Promise<Response>;
 }
 
