@@ -568,7 +568,7 @@ export interface DurableObjectStorage extends DurableObjectStorageMethods {
      * Non-storage operations that affect external state, like calling fetch, may execute more than once if the transaction is retried.
      * 
      * The closure can return a value, which will be propagated as the return value of the call. */
-    transaction<T>(closure: (txn: DurableObjectStorageTransaction) => T): Promise<T>;
+    transaction<T>(closure: (txn: DurableObjectStorageTransaction) => T | PromiseLike<T>): Promise<T>;
 
     /** Deletes all keys and associated values, effectively deallocating all storage used by the worker. 
      * 
