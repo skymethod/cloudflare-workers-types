@@ -653,3 +653,26 @@ export interface DurableObjectState {
 }
 
 //#endregion
+
+//#region WebSockets
+
+export interface CloudflareWebSocketExtensions {
+    /** Accepts the Websocket connection and begins terminating requests for the WebSocket at Cloudflare's edge. 
+     * This effectively enables the Workers runtime to begin responding to and handling WebSocket requests. 
+     * 
+     * https://developers.cloudflare.com/workers/runtime-apis/websockets#accept
+     * */
+    accept(): void;
+}
+
+export interface CloudflareResponseInitExtensions {
+    webSocket?: WebSocket;
+}
+
+// non-standard class, only on CF
+export interface WebSocketPair {
+    readonly 0: WebSocket; // client, returned in the ResponseInit
+    readonly 1: WebSocket & CloudflareWebSocketExtensions; // server, accept(), addEventListener(), send() and close()
+}
+
+//#endregion
