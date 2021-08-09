@@ -372,10 +372,37 @@ export interface KVNamespace {
 
 //#endregion
 
-//#region Workers Cache https://developers.cloudflare.com/workers/runtime-apis/cache
+//#region Workers Cache https://developers.cloudflare.com/workers/runtime-apis/cache https://developers.cloudflare.com/workers/learning/how-the-cache-works
 
+/**
+ * The Cache API is available globally but the contents of the cache do not replicate outside of the originating data center.
+ * 
+ * Any Cache API operations in the Cloudflare Workers dashboard editor, Playground previews, and any *.workers.dev deployments will have no impact. 
+ * Only Workers deployed to custom domains have access to functional Cache operations.
+ */
 export interface CfGlobalCaches {
+    /**
+     * The default cache (the same cache shared with fetch requests).
+     * 
+     * This is useful when needing to override content that is already cached, after receiving the response.
+     * 
+     * This affects your public cache.
+     * 
+     * Zone-level: it uses the same cache "namespace" as your zone (e.g. example.com)
+     */
     readonly default: CfCache; // caches.default
+
+    /**
+     * A namespaced cache (separate from the cache shared with fetch requests).
+     * 
+     * This can be useful when writing new content to the cache, for example after running a more compute heavy operation such as parsing HTML or running a computation, 
+     * to store them locally in the colo and readily access them on the following request, rather having to rerun the same operation.
+     * 
+     * The public cannot access this (unless you let them through your Worker).
+     * 
+     * Account-level: two different workers can access the same cache using the same name!  They will be accessing the same namespace.
+     */
+    open(cacheName: string): Promise<CfCache>;
 }
 
 export interface CfCacheOptions {
